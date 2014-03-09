@@ -1,0 +1,31 @@
+body {
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  margin: 0 0 0 0;
+  padding: 0 0 0 0;
+  height: 100%;
+}
+
+a {
+  color: #00B7FF;
+}
+
+html {
+	height: 100%;
+	padding: 0 0 0 0;
+	margin: 0 0 0 0;
+}
+
+#map-canvas {
+	height: 100%;
+}
+
+.button {
+	display: block;
+	text-align:center;
+	padding: 10px;
+	margin: 10px auto 10px auto;
+	background: #29BCF5;
+	color: #ffffff;
+	text-decoration: none;
+	border-radius: 3px;
+}

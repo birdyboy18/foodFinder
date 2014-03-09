@@ -1,0 +1,152 @@
+<!DOCTYPE>
+<html>
+	<head>
+		<title>Restaurants Near You</title>
+		<link rel="stylesheet" href="stylesheets/style.css">
+		<script src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+		<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoj24D8pi1wkjxDSoJN8VKO01_-1qKc2U&sensor=true"></script>
+		<script type="text/javascript">
+
+		var map;
+		var intialPosition;
+		var directionsDisplay;
+		var directionService;
+		var markers = [];
+
+      	function initialize() {
+
+      		//initilise a directions service
+
+      		directionsService = new google.maps.DirectionsService();
+
+      		$.getJSON('/business/restaurants', function(data){
+      			processMarkers(data);
+      		});
+
+	        var mapOptions = {
+	          center: new google.maps.LatLng(50.725285, -1.879689),
+	          zoom: 14
+	        };
+
+	        var rendererOptions = {
+	        	map: map
+	        }
+
+	        directionsDisplay = new google.maps.DirectionsRenderer(rendererOptions);
+	        
+	        map = new google.maps.Map(document.getElementById("map-canvas"),
+	            mapOptions);
+
+			if(navigator.geolocation) {
+	        	browserSupportFlag = true;
+	        	navigator.geolocation.getCurrentPosition(function(pos){
+	        		intialLocation = new google.maps.LatLng(pos.coords.latitude,pos.coords.longitude);
+	        		map.setCenter(intialLocation);
+	        		addUserMarker(intialLocation);
+	        	}, function(){
+	        		handleGeolocation(browserSupportFlag);
+	        	});
+	        } else {
+	        	browserSupportFlag = false;
+	        	handleGeolocation(browserSupportFlag);
+	        }
+
+	    }
+
+	    //Custom Functions
+
+	    var infowindow = new google.maps.InfoWindow({
+	    	maxWidth: 400
+	    });
+
+	    function processMarkers(data) {
+	    	for (var i =0; i < data.length; i++) {
+	    		marker = new google.maps.Marker({
+	    			map: map,
+	    			draggable: false,
+	    			animation: google.maps.Animation.DROP,
+	    			position: new google.maps.LatLng(data[i].geocode.latitude,data[i].geocode.longitude),
+	    			title: data[i].businessName,
+	    			html: '<div class="infowindow">' +
+	    			'<h3>'+data[i].businessName+'</h3>' +
+	    			'<li>Rating: ' + data[i].ratingValue + '</li>' +
+	    			'<li>Postcode: ' + data[i].address.postcode + '</li>' +
+	    			'<a id="directions" href="#" class="button" onclick="calcRoute(' + data[i].geocode.latitude + ',' + data[i].geocode.longitude + ')">Get Directions</a>' +
+	    			'</div>'
+	    		});
+
+	    		google.maps.event.addListener(marker, 'click', function() {
+	    			infowindow.setContent(this.html);
+	    			infowindow.open(map,this);
+	    			//var directions = document.getElementById('directions');
+	    			//document.addEventListener(directions, 'click', calcRoute(this.position.d,this.position.e));
+	    		});
+
+	    		markers.push(marker);
+	    	}
+	    	console.log(markers);
+	    }
+
+	     function addUserMarker(location) {
+	    	marker = new google.maps.Marker({
+	    		map:map,
+	    		draggable: false,
+	    		position: intialLocation,
+	    		title: "You Are Here",
+	    		icon: 'userIcon.png'
+	    	});
+
+	    	google.maps.event.addListener(marker, 'click', function(){
+	    		infowindow.setContent(this.title);
+	    		infowindow.open(map, this);
+	    	})
+	    }
+
+	    function calcRoute(lat,lon) {
+	    	console.log("Latitude: " + lat + "Longitude: " + lon);
+
+	    	//Remove all other markers from the map
+	    	for (var i = 0; i < markers.length; i++) {
+	    		markers[i].setMap(null);
+	    	}
+
+	    	markers = [];
+
+	    	//Make a directions request
+	    	var start = intialLocation,
+	    		end = new google.maps.LatLng(lat,lon);
+
+	    	var request = {
+	    		origin: start,
+	    		destination: end,
+	    		travelMode: google.maps.TravelMode.WALKING
+	    	}
+
+	    	//Make the request
+	    	directionsService.route(request, function(res,status){
+	    		directionsDisplay.setDirections(res);
+	    		showRoute(res);
+	    		console.log(res);
+	    	});
+	    }
+
+	    function showRoute(directionsResult) {
+	    	var myRoute = directionsResult.routes[0].legs[0];
+
+			  for (var i = 0; i < myRoute.steps.length; i++) {
+			    var marker = new google.maps.Marker({
+			      position: myRoute.steps[i].start_location,
+			      map: map
+			    });
+			   
+			    markers[i] = marker;
+			  }
+	    }
+	      	
+	    google.maps.event.addDomListener(window, 'load', initialize);
+    </script>
+	</head>
+	<body>
+		<div id="map-canvas"></div>
+	</body>
+</html>
